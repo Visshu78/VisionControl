@@ -12,12 +12,6 @@ class BrightnessControl:
         smooth_factor: float = 0.2,
         notify_callback: Optional[Callable[[int], None]] = None
     ):
-        """
-        length_range: expected min,max distances from hand-tracker (pixels)
-        brightness_range: target brightness min,max (integers 0-100)
-        smooth_factor: 0..1 (higher -> smoother / slower changes). 0 -> immediate.
-        notify_callback: optional function called with new brightness int after change.
-        """
         self.len_min, self.len_max = length_range
         self.bmin, self.bmax = brightness_range
         self.smooth_factor = float(np.clip(smooth_factor, 0.0, 0.95))
@@ -72,29 +66,22 @@ class BrightnessControl:
                 self.current_brightness = new_b
 
     def update_from_length(self, length: float):
-        """
-        Call this when your hand-tracker gives you the pixel distance between thumb and index.
-        """
+        
         target = self._map_length_to_brightness(length)
         self._apply_brightness(target)
 
     def update_from_landmarks(self, thumb: Tuple[float, float], index: Tuple[float, float]):
-        """
-        Call this when your tracker gives two (x,y) coordinates (in same coordinate system).
-        thumb, index: (x, y)
-        """
+        
         dx = thumb[0] - index[0]
         dy = thumb[1] - index[1]
         length = float(np.hypot(dx, dy))
         self.update_from_length(length)
 
     def get_current_brightness(self) -> int:
-        """Returns last-known brightness value (int)."""
         with self._lock:
             return int(self.current_brightness)
 
     def set_direct(self, brightness: int):
-        """Force-set brightness (clamped)."""
         b = int(np.clip(int(brightness), self.bmin, self.bmax))
         self._apply_brightness(b)
 
